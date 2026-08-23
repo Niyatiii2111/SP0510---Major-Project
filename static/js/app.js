@@ -253,6 +253,12 @@ async function processPDFs() {
             fileList.innerHTML = '';
             btnProcess.disabled = true;
             btnProcess.innerText = '🚀 Process PDFs';
+
+            // Show notice if the PDF has no text (or if chat building failed)
+            if (data.chat_enabled === false) {
+                chatCaption.style.display = 'none';
+                appendMessage('assistant', '⚠️ Note: This document contains no extractable text (it might be scanned, image-only, or contain unreadable formatting). AI chat is disabled for this session, but you can still present and navigate using gestures!');
+            }
         } else {
             alert('❌ Upload error: ' + (data.error || 'Unknown error'));
             btnProcess.disabled = false;

@@ -26,27 +26,56 @@ def extract_text_from_pdfs(pdf_files_data):
     """Extracts raw text from list of PDF file bytes."""
     text = ""
     for file_bytes in pdf_files_data:
-        # Wrap bytes in a pymupdf Document or use PyPDF2
-        # PyPDF2 is safer for extracting text from raw bytes
-        import io
-        pdf_file = io.BytesIO(file_bytes)
-        reader = PdfReader(pdf_file)
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text + "\n"
+        file_text = ""
+        # Method 1: Try PyMuPDF (fitz) - highly robust and fast
+        try:
+            doc = pymupdf.open(stream=file_bytes, filetype="pdf")
+            for page in doc:
+                try:
+                    page_text = page.get_text()
+                    if page_text:
+                        file_text += page_text + "\n"
+                except Exception as page_err:
+                    print(f"PyMuPDF page extraction error: {page_err}")
+            doc.close()
+        except Exception as doc_err:
+            print(f"PyMuPDF document open/parse error: {doc_err}")
+            
+        # Method 2: Fallback to PyPDF2 if PyMuPDF extracted no text
+        if not file_text.strip():
+            try:
+                import io
+                pdf_file = io.BytesIO(file_bytes)
+                reader = PdfReader(pdf_file)
+                for page in reader.pages:
+                    try:
+                        page_text = page.extract_text()
+                        if page_text:
+                            file_text += page_text + "\n"
+                    except Exception as page_err:
+                        print(f"PyPDF2 page extraction error: {page_err}")
+            except Exception as doc_err:
+                print(f"PyPDF2 document open/parse error: {doc_err}")
+                
+        text += file_text
     return text
 
 def convert_pdf_to_images(pdf_files_data):
     """Converts pages of uploaded PDFs into PNG bytes."""
     pages_png = []
     for file_bytes in pdf_files_data:
-        doc = pymupdf.open(stream=file_bytes, filetype="pdf")
-        for page in doc:
-            pix = page.get_pixmap(dpi=150)
-            png_bytes = pix.tobytes("png")
-            pages_png.append(png_bytes)
-        doc.close()
+        try:
+            doc = pymupdf.open(stream=file_bytes, filetype="pdf")
+            for page in doc:
+                try:
+                    pix = page.get_pixmap(dpi=150)
+                    png_bytes = pix.tobytes("png")
+                    pages_png.append(png_bytes)
+                except Exception as page_err:
+                    print(f"Failed to render PDF page to image: {page_err}")
+            doc.close()
+        except Exception as doc_err:
+            print(f"Failed to open PDF for image conversion: {doc_err}")
     return pages_png
 
 def build_vector_store(text):
@@ -75,19 +104,33 @@ def upload_files():
     try:
         pdf_data = []
         for file in uploaded_files:
+            if file.filename == '':
+                continue
             pdf_data.append(file.read())
+
+        if not pdf_data:
+            return jsonify({"error": "No valid files were uploaded."}), 400
 
         # Extract text for QA
         text = extract_text_from_pdfs(pdf_data)
         
         # Build FAISS vector store in a background variable if text is present
+        chat_enabled = False
         if text.strip():
-            vector_stores[session_id] = build_vector_store(text)
+            try:
+                vector_stores[session_id] = build_vector_store(text)
+                chat_enabled = True
+            except Exception as ve:
+                print(f"Failed to build vector store: {ve}")
+                vector_stores[session_id] = None
         else:
-            return jsonify({"error": "No extractable text found in the uploaded PDFs."}), 400
+            vector_stores[session_id] = None
 
         # Convert PDF pages to images
         png_pages = convert_pdf_to_images(pdf_data)
+        if not png_pages:
+            return jsonify({"error": "Failed to extract pages or render slides from the uploaded files. Make sure they are valid PDF documents."}), 400
+            
         base64_slides = []
         for pg in png_pages:
             b64_str = base64.b64encode(pg).decode('utf-8')
@@ -97,6 +140,7 @@ def upload_files():
             "status": "success",
             "session_id": session_id,
             "slides": base64_slides,
+            "chat_enabled": chat_enabled,
             "message": f"Successfully processed {len(base64_slides)} slides."
         })
 
@@ -116,6 +160,14 @@ def chat():
 
     if not session_id or session_id not in vector_stores:
         return jsonify({"error": "No active document session. Please upload PDFs first."}), 400
+
+    # Handle case where session exists but has no vector store (e.g. image-only PDF)
+    vector_store = vector_stores[session_id]
+    if vector_store is None:
+        return jsonify({
+            "status": "success",
+            "answer": "This document contains no extractable text (it might be scanned, image-only, or contain unreadable formatting). AI chat is disabled for this session, but you can still present and navigate using gestures!"
+        })
 
     # Determine Groq API Key
     api_key = os.getenv("GROQ_API_KEY")
