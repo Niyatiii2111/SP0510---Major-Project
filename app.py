@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 # LangChain / RAG Components
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 
@@ -21,6 +21,9 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 # In-memory storage for vector stores to keep backend clean and stateless
 # Key: session_id, Value: FAISS vector database
 vector_stores = {}
+
+# Initialize embeddings once globally to prevent reloading into memory
+embeddings = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
 
 def extract_text_from_pdfs(pdf_files_data):
     """Extracts raw text from list of PDF file bytes."""
@@ -79,10 +82,9 @@ def convert_pdf_to_images(pdf_files_data):
     return pages_png
 
 def build_vector_store(text):
-    """Splits text and builds a FAISS vector store with HuggingFace embeddings."""
+    """Splits text and builds a FAISS vector store with global FastEmbed embeddings."""
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     chunks = splitter.split_text(text)
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     return FAISS.from_texts(chunks, embeddings)
 
 @app.route('/')
