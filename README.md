@@ -1,166 +1,153 @@
-# SlidePilot — Smart Presentation Assistant  
+# SlidePilot — Smart Presentation Assistant
 ### Gesture Navigation · Zoom Control · AI PDF Chatbot
 
-**Author:** Niyati Bhandari   
-**Collaborators:** Raghav Khandelwal, Nityam Kalal, Parikshit Bishnoi, Suhani Jangid  
+SlidePilot is a premium, web-based intelligent PDF presentation assistant. It combines **in-browser gesture hand-tracking**, **dynamic zooming**, and a **Groq-powered RAG (Retrieval-Augmented Generation) document assistant** in a single web application.
+
+Unlike heavy server-side processing architectures, SlidePilot performs hand tracking **directly in the client browser** using MediaPipe. This keeps the Flask backend lightweight, fast, and highly cost-effective to deploy.
 
 ---
 
+## Key Features
 
+### 🎥 Browser-Side Hand Gesture Control
+*   **MediaPipe Integration:** Real-time webcam hand tracking runs directly in the user's browser, eliminating server-side video latency.
+*   **Dual Gesture Modes:** Navigation Mode and Zoom Mode.
+*   **Fist-Hold Mode Toggle:** Hold a fist for **2 seconds** to toggle between NAV and ZOOM modes.
+*   **Navigation Mode (NAV):**
+    *   `1 finger` ➜ Previous Slide
+    *   `4+ fingers` ➜ Next Slide
+*   **Zoom Mode (ZOOM):**
+    *   `1 finger` ➜ Zoom In
+    *   `4+ fingers` ➜ Zoom Out
+*   **Dead Zone:** 2-3 fingers are treated as a dead zone to prevent false actions during transition.
+*   **Manual Fallbacks:** Dedicated manual zoom buttons, fit-to-screen reset, full-width mode, and full-screen presentation mode buttons.
 
-## Introduction
-
-SlidePilot is an intelligent PDF presentation assistant that combines **gesture-based slide navigation**, **gesture-controlled zooming**, and an **AI-powered PDF chatbot** in a single Streamlit application.
-
-Users can upload PDF documents, move between slides using hand gestures, zoom in or out with finger gestures, and ask questions about document content using an integrated AI assistant powered by Retrieval Augmented Generation (RAG).
-
-The system supports dual gesture modes (Navigation and Zoom), ensuring reliable interaction while minimizing false detections. This project demonstrates practical integration of Computer Vision and document-based AI for academic presentation automation.
-
-The system demonstrates practical integration of:
-
-- CVZone (MediaPipe-based Hand Tracking)
-- OpenCV (Computer Vision)
-- FAISS (Vector Database)
-- LangChain (RAG Pipeline)
-- Groq LLM (LLaMA 3.1)
-- Streamlit (User Interface)
-
----
-## Home Page
-Streamlit-based interface displaying PDF slide viewer, gesture control panel, and Groq-powered document assistant.
-<p align="left">
-  <img src="https://raw.githubusercontent.com/Niyatiii2111/SP0510---Major-Project/7f7740a96539d775317be7165a83cc0b54c7ca36/Slidepilot%20homepage.jpeg"
-Project/5bc771d89149149ac559ba111079aa279043476c/Home%20page.jpeg" width="500"/>
-  <br>
-
-
-
-## Features
-
-### Hand Gesture Control
-
-- Real-time webcam hand tracking (CVZone + OpenCV)
-- Dual gesture modes: Navigation and Zoom
-- Fist hold (2 seconds) to switch modes
-- Navigation Mode:
-  - 1 finger → Previous slide
-  - 4-5 fingers → Next slide
-- Zoom Mode:
-  - 1 finger → Zoom In
-  - 4-5 fingers → Zoom Out
-- Dead zone for 2–3 fingers to avoid false triggers
-- Manual zoom controls as fallback
-- Visual gesture feedback and mode indicators
----
-
-### PDF Intellectual Assistant
-
-- Upload multiple PDF documents
-- Automatic text extraction (PyPDF2)
-- Recursive chunking with overlap
-- Embedding generation (HuggingFace)
-- FAISS vector database creation
-- Semantic similarity search
-- Context-aware response using Groq LLM
-- Streamlit-based conversational UI
-- Session-based chat history
+### 🤖 PDF AI Intellectual Assistant (RAG)
+*   **Multi-PDF Processing:** Upload and parse multiple PDF documents at once.
+*   **Semantic Chunking & Indexing:** Chunks document text and generates vector embeddings using a lightweight sentence transformer (`all-MiniLM-L6-v2`).
+*   **FAISS Vector Database:** Stores vectors in-memory for instant similarity search.
+*   **Groq LLaMA 3.1 Integration:** Delivers context-rich, conversationally accurate answers to document-based questions.
+*   **Stateless Sessions:** Dynamically manages document uploads per session to keep server memory clean.
 
 ---
 
 ## Gesture Guide
-           
-
 
 <p align="left">
-  <img src="https://github.com/Niyatiii2111/SP0510---Major-Project/blob/8c1e9b3e60fa7957d3939abb810d6981e883cad3/Hands%20image.jpeg?raw=true" width="200"/>
+  <img src="Hands image.jpeg" width="220" alt="Gesture Reference Chart"/>
   <br>
-  <em>Gesture Mapping for Slide Navigation/Zoom Control</em>
+  <em>Gesture mapping for Slide Navigation / Zoom Control</em>
 </p>
 
 | Mode | Gesture | Action |
-|------|---------|--------|
-| NAV | Fist (2sec) | Switch to Zoom Mode |
-| NAV | 1 finger | Previous Slide |
-| NAV | 4-5 fingers | Next Slide |
-| ZOOM | Fist (2sec) | Switch to Nav Mode |
-| ZOOM | 1 finger | Zoom In |
-| ZOOM | 4-5 fingers | Zoom Out |
-| Both | 2–3 fingers | Dead zone (no action) |
-
-
-
-## Project Architecture
-
-### Gesture Control Flow
-Webcam → CVZone HandDetector → Gesture Logic → Streamlit State → Slide/Zoom Control
-
-
-### PDF Chatbot (RAG) Flow
-PDF Upload → Text Extraction → Chunking → Embeddings → FAISS → Similarity Search → Groq LLM → Response
-
+| :--- | :--- | :--- |
+| **Both** | ✊ Fist (hold 2s) | Toggle between NAV and ZOOM modes |
+| **NAV** | ☝️ 1 finger | ⬅️ Previous Slide |
+| **NAV** | 🖐️ 4+ fingers | ➡️ Next Slide |
+| **ZOOM** | ☝️ 1 finger | 🔍 Zoom In |
+| **ZOOM** | 🖐️ 4+ fingers | 🔎 Zoom Out |
+| **Both** | ✌️ 2–3 fingers | 🚫 Dead Zone (No action) |
 
 ---
 
-## Local Installation and Requirements
+## Tech Stack
 
-### Software Requirements
-
-- Python 3.10+
-- Webcam
-- Internet connection (for Groq API)
-
----
-
-## Groq API Key Setup
-
-Set your API key as an environment variable.
+*   **Frontend:** HTML5, CSS3 (Vanilla Premium Theme), Javascript, MediaPipe Hand Landmarker API
+*   **Backend:** Python, Flask, Gunicorn (WSGI Server)
+*   **RAG Pipeline:** LangChain (Text Splitters, Prompt Templates), PyMuPDF (fitz), PyPDF2, FAISS, Sentence Transformers
+*   **AI Inference:** Groq Cloud API (`llama-3.1-8b-instant`)
 
 ---
 
-## Resources, Tools and Packages
+## Local Installation and Setup
 
-### Main Libraries
+### Prerequisites
+*   Python 3.10 or higher
+*   Webcam (for hand gesture tracking)
+*   Groq API Key (Sign up at [console.groq.com](https://console.groq.com))
 
-- OpenCV  
-- MediaPipe  
-- NumPy  
-- Streamlit  
-- LangChain  
-- FAISS  
-- HuggingFace Embeddings  
-- Groq LLM  
-- PyPDF2  
+### 1. Clone the Repository
+```bash
+git clone https://github.com/<your-username>/Slide_Pilot.git
+cd Slide_Pilot
+```
+
+### 2. Set Up a Virtual Environment
+```bash
+python -m venv venv
+# On Windows (PowerShell):
+.\venv\Scripts\Activate.ps1
+# On macOS/Linux:
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configure Environment Variables
+Create a file named `.env` in the root folder of the project and add your Groq API Key:
+```env
+GROQ_API_KEY=your_groq_api_key_here
+```
+> [!IMPORTANT]
+> The `.env` file contains sensitive API keys. It is automatically ignored by Git (configured in `.gitignore`) and should never be pushed to a public repository.
+
+### 5. Run the Application
+```bash
+python app.py
+```
+Open your browser and navigate to: **`http://localhost:5000`**
 
 ---
 
-## Deployment
+## Pushing to GitHub
 
-The application is now publicly accessible via Streamlit Cloud.
+To upload this clean version to your GitHub account:
 
-🔗 *Open Web App:* https://smart-presentation-bot.streamlit.app/
-
-> No installation required — works directly in browser
-
----
-
-### What You Can Do Online
-- Upload PDF files and chat with them
-- Ask document-based questions
-- Experience AI powered semantic search
-- Test the interface without local setup
----
-
-### Future Enhancements
-
-- Voice commands
-- Mouse cursor control using hand tracking    
-- Persistent chat history  
-- Document summarization  
+1. **Initialize Git & Stage Files** (ensure `.gitignore` is present):
+   ```bash
+   git init
+   git add .
+   ```
+2. **Commit Changes**:
+   ```bash
+   git commit -m "Initialize SlidePilot Flask application and clean up legacy files"
+   ```
+3. **Create Repository on GitHub**:
+   - Go to [github.com/new](https://github.com/new) and create a repository named `Slide_Pilot`. Do **not** check "Add a README", "Add .gitignore", or "Choose a license".
+4. **Push to Main**:
+   ```bash
+   git remote add origin https://github.com/<your-username>/Slide_Pilot.git
+   git branch -M main
+   git push -u origin main
+   ```
 
 ---
 
-## Disclaimer
+## Server Deployment Steps (e.g., Render)
 
-This project is developed for **learning, demonstration, and academic purposes only**.
+SlidePilot is designed to run seamlessly on cloud application servers. Here is how to deploy it on **Render**:
 
-Not intended for production or commercial deployment.
+1. **Create Account:** Go to [Render](https://render.com) and log in with your GitHub account.
+2. **New Web Service:** Click **New +** -> **Web Service**.
+3. **Connect Repository:** Select the `Slide_Pilot` repository you just pushed to GitHub.
+4. **Configure Settings:**
+   *   **Name:** `slidepilot` (or your preferred name)
+   *   **Environment:** `Python`
+   *   **Region:** Select the region closest to you
+   *   **Branch:** `main`
+   *   **Build Command:** `pip install -r requirements.txt`
+   *   **Start Command:** `gunicorn app:app` (Render automatically binds to the right port)
+5. **Add Environment Variables:**
+   *   Scroll down to the **Environment** section.
+   *   Click **Add Environment Variable**.
+   *   Key: `GROQ_API_KEY`
+   *   Value: *Your actual Groq API Key* (e.g. `gsk_...`)
+6. **Deploy:** Click **Deploy Web Service**. Render will build and deploy the app. Once complete, you will receive a public URL (e.g., `https://slidepilot.onrender.com`).
+
+---
+
+## License & Disclaimer
+This project is developed for **academic demonstration and learning purposes**. It is not intended for high-scale commercial production without proper rate-limiting and authorization layers.

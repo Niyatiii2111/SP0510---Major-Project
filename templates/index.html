@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SlidePilot - Gesture & AI Slide Assistant</title>
+    <!-- Google Fonts: Outfit for Headings, Inter for Body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+    <!-- Premium Stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- App Container -->
+    <div class="app-container" id="appContainer">
+        <!-- Sidebar Controls -->
+        <aside class="sidebar">
+            <!-- Brand Logo -->
+            <div class="brand">
+                <h1>Slide<span>Pilot</span></h1>
+                <p>Gesture &middot; Zoom &middot; AI Chat</p>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Section 1: Document Upload & Setup -->
+            <div class="sidebar-section">
+                <h3>⚙️ SETUP</h3>
+                <div class="upload-area" id="sidebarUploadArea">
+                    <svg class="icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                    </svg>
+                    <p>Click to upload PDFs</p>
+                    <input type="file" id="fileInput" accept="application/pdf" multiple style="display: none;">
+                </div>
+                
+                <div class="file-list" id="fileList"></div>
+
+                <button class="btn btn-primary" id="btnProcess" disabled>🚀 Process PDFs</button>
+                <button class="btn btn-secondary" id="btnUnload" style="display: none;">🗑️ Unload Document</button>
+            </div>
+
+            <!-- Section 2: Camera & Gestures (active after upload) -->
+            <div class="sidebar-section disabled-state" id="gestureSection">
+                <hr class="divider">
+                <h3>🎥 GESTURE CONTROL</h3>
+                
+                <div class="mode-badge nav-mode" id="modeBadge">🧭 NAV MODE</div>
+                
+                <button class="btn btn-secondary" id="btnToggleCamera" style="margin-bottom: 12px; width: 100%;">
+                    <span id="btnToggleCameraIcon">🎥</span> <span id="btnToggleCameraText">Start Camera</span>
+                </button>
+
+                <!-- Camera Preview Card -->
+                <div class="camera-card">
+                    <video id="webcam" autoplay muted playsinline></video>
+                    <canvas id="canvas"></canvas>
+                    
+                    <!-- Overlay Info -->
+                    <div class="finger-count-badge" id="fingerBadge" style="display: none;">5</div>
+                    <div class="camera-status" id="cameraStatus">Camera offline</div>
+                    <div class="gesture-alert" id="gestureAlert"></div>
+                    
+                    <!-- Progress Bar for Fist Mode Hold -->
+                    <div class="hold-progress-container" id="holdProgressContainer" style="display: none;">
+                        <span id="holdText">Hold fist...</span>
+                        <div class="hold-progress-bar">
+                            <div class="hold-progress-fill" id="holdProgressFill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-tertiary" id="btnToggleMode">🔁 Switch to Zoom mode</button>
+
+                <!-- Gesture Guide Tables -->
+                <div class="gesture-guide" id="guideNav">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Gesture</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>✊ Fist 2s</td>
+                                <td>➜ Switch to Zoom</td>
+                            </tr>
+                            <tr>
+                                <td>☝️ 1 finger</td>
+                                <td>⬅️ Previous slide</td>
+                            </tr>
+                            <tr>
+                                <td>✌️ 2 or 3</td>
+                                <td>(dead zone)</td>
+                            </tr>
+                            <tr>
+                                <td>🖐️ 4+ fingers</td>
+                                <td>➡️ Next slide</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="gesture-guide" id="guideZoom" style="display: none;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Gesture</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>✊ Fist 2s</td>
+                                <td>➜ Switch to Nav</td>
+                            </tr>
+                            <tr>
+                                <td>☝️ 1 finger</td>
+                                <td>🔍 Zoom In</td>
+                            </tr>
+                            <tr>
+                                <td>✌️ 2 or 3</td>
+                                <td>(dead zone)</td>
+                            </tr>
+                            <tr>
+                                <td>🖐️ 4+ fingers</td>
+                                <td>🔎 Zoom Out</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Section 3: Manual Zoom -->
+            <div class="sidebar-section disabled-state" id="zoomSection">
+                <hr class="divider">
+                <h3>🔍 ZOOM (MANUAL)</h3>
+                <div class="zoom-controls">
+                    <button class="btn btn-icon" id="btnZoomOut">➖</button>
+                    <div class="zoom-level" id="zoomLevelDisplay">1.00×</div>
+                    <button class="btn btn-icon" id="btnZoomIn">➕</button>
+                </div>
+                <button class="btn btn-secondary" id="btnResetZoom">↺ Reset Zoom</button>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Empty State / Welcome Screen -->
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-card">
+                    <div class="welcome-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                    </div>
+                    <h2>Welcome to SlidePilot</h2>
+                    <p>Upload and process a PDF file to begin your interactive presentation experience.</p>
+                    <button class="btn btn-primary" id="btnWelcomeUpload">Upload PDF Document</button>
+                </div>
+            </div>
+
+            <!-- Main Interactive Workspace -->
+            <div class="workspace-grid" id="workspaceGrid" style="display: none;">
+                <!-- Slide Viewer Column -->
+                <section class="viewer-column" id="viewerColumn">
+                    <div class="viewer-header">
+                        <div class="viewer-info">
+                            <span class="slide-indicator" id="slideIndicator">📄 Slide 1 / 1</span>
+                            <span class="zoom-pill" id="zoomPill">🔍 1.00×</span>
+                        </div>
+                        <div class="viewer-actions">
+                            <button class="btn btn-small" id="btnPrev">⬅️</button>
+                            <button class="btn btn-small" id="btnNext">➡️</button>
+                            <button class="btn btn-small" id="btnToggleFullView" title="Expand to full width">⛶</button>
+                            <button class="btn btn-primary btn-small" id="btnPresent" title="Enter presentation mode">▶ Present</button>
+                        </div>
+                    </div>
+
+                    <!-- Slide Display -->
+                    <div class="slide-viewport">
+                        <div class="slide-container" id="slideContainer">
+                            <img id="slideImage" src="" alt="Slide Image">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- AI Assistant Column -->
+                <section class="chat-column" id="chatColumn">
+                    <div class="chat-header">
+                        <h3>🤖 Groq Assistant</h3>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="font-size: 0.72rem; color: var(--text-dark); font-weight: 600;">↔️ Width</span>
+                                <input type="range" id="chatWidthSlider" min="20" max="50" value="30" style="width: 70px; height: 4px; cursor: pointer; accent-color: var(--color-primary);">
+                            </div>
+                            <button class="btn btn-clear" id="btnClearChat" title="Clear chat history">🗑️ Clear</button>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="chat-caption" id="chatCaption">💬 No messages yet. Ask something about your document!</div>
+                    </div>
+
+                    <div class="chat-input-wrapper">
+                        <input type="text" id="chatInput" placeholder="Ask about the document...">
+                        <button id="btnSendChat">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Presentation Mode Fullscreen Container -->
+    <div class="presentation-fullscreen" id="presentationFullscreen" style="display: none;">
+        <div class="fullscreen-slide-wrap">
+            <img id="fullscreenSlideImage" src="" alt="Fullscreen Slide">
+        </div>
+        <div class="fullscreen-nav-bar">
+            <button class="btn btn-fs" id="fsBtnPrev">⬅️ Prev</button>
+            <div class="fullscreen-counter" id="fsCounter">Slide 1 / 1</div>
+            <button class="btn btn-fs" id="fsBtnNext">Next ➡️</button>
+            <button class="btn btn-fs btn-fs-exit" id="fsBtnExit">✕ Exit</button>
+        </div>
+    </div>
+
+    <!-- Script Import (runs as ES Module to allow importing MediaPipe) -->
+    <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>
