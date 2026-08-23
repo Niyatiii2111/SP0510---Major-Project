@@ -1,6 +1,10 @@
 # SlidePilot — Smart Presentation Assistant
 ### Gesture Navigation · Zoom Control · AI PDF Chatbot
 
+<p align="center">
+  <img src="Home page.png" width="800" alt="SlidePilot Homepage Preview"/>
+</p>
+
 SlidePilot is a premium, web-based intelligent PDF presentation assistant. It combines **in-browser gesture hand-tracking**, **dynamic zooming**, and a **Groq-powered RAG (Retrieval-Augmented Generation) document assistant** in a single web application.
 
 Unlike heavy server-side processing architectures, SlidePilot performs hand tracking **directly in the client browser** using MediaPipe. This keeps the Flask backend lightweight, fast, and highly cost-effective to deploy.
@@ -68,7 +72,7 @@ Unlike heavy server-side processing architectures, SlidePilot performs hand trac
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/<your-username>/Slide_Pilot.git
+git clone https://github.com/Niyatiii2111/Slide_Pilot.git
 cd Slide_Pilot
 ```
 
@@ -104,48 +108,64 @@ Open your browser and navigate to: **`http://localhost:5000`**
 
 ## Pushing to GitHub
 
-To upload this clean version to your GitHub account:
+To upload updates to your GitHub account:
 
-1. **Initialize Git & Stage Files** (ensure `.gitignore` is present):
+1. **Stage Files** (ensure `.gitignore` is present):
    ```bash
-   git init
    git add .
    ```
 2. **Commit Changes**:
    ```bash
-   git commit -m "Initialize SlidePilot Flask application and clean up legacy files"
+   git commit -m "Update SlidePilot to support optimized deployments and add homepage screenshot"
    ```
-3. **Create Repository on GitHub**:
-   - Go to [github.com/new](https://github.com/new) and create a repository named `Slide_Pilot`. Do **not** check "Add a README", "Add .gitignore", or "Choose a license".
-4. **Push to Main**:
+3. **Push to Main**:
    ```bash
-   git remote add origin https://github.com/<your-username>/Slide_Pilot.git
-   git branch -M main
-   git push -u origin main
+   git push origin main
    ```
 
 ---
 
-## Server Deployment Steps (e.g., Render)
+## Server Deployment Steps (100% Free Hosting)
 
-SlidePilot is designed to run seamlessly on cloud application servers. Here is how to deploy it on **Render**:
+Deploying machine learning models (like sentence transformers) on Render's free tier can exceed the 512MB RAM limit. To avoid this, we recommend two free hosting methods:
 
-1. **Create Account:** Go to [Render](https://render.com) and log in with your GitHub account.
-2. **New Web Service:** Click **New +** -> **Web Service**.
-3. **Connect Repository:** Select the `Slide_Pilot` repository you just pushed to GitHub.
-4. **Configure Settings:**
-   *   **Name:** `slidepilot` (or your preferred name)
-   *   **Environment:** `Python`
-   *   **Region:** Select the region closest to you
-   *   **Branch:** `main`
+### Method A: Deploy on Hugging Face Spaces (Recommended - 100% Free, 16GB RAM)
+Hugging Face offers a completely free hosting tier for Python applications with **16GB of RAM and 50GB of disk space**. Since we have included a `Dockerfile` in the project, deployment takes just 2 minutes:
+
+1. **Sign Up/Log In:** Go to [huggingface.co](https://huggingface.co) and create an account.
+2. **Create Space:** Go to the "Spaces" tab and click **Create new Space**.
+3. **Configure Space:**
+   *   **Space Name:** `SlidePilot`
+   *   **SDK:** Select **Docker** (it will auto-detect our `Dockerfile`).
+   *   **Template:** Select `Blank`.
+   *   **Space Hardware:** Select **CPU basic (Free, 16GB RAM)**.
+   *   **Privacy:** Public or Private.
+4. **Define Secret Key:**
+   *   Once created, go to the Space's **Settings** tab.
+   *   Scroll down to **Variables and Secrets**.
+   *   Click **New Secret**.
+   *   Set Name to: `GROQ_API_KEY`
+   *   Set Value to: *Your actual Groq API key* (e.g. `gsk_...`).
+5. **Upload Code:**
+   *   Go to **Files and versions** -> **Add file** -> **Upload files**.
+   *   Drag and drop the entire contents of your local `project/` directory (except the ignored `.venv` and `.env` folders).
+   *   *Alternative:* Link the Space to your GitHub repo and push to it.
+6. **Live App:** Hugging Face will build the container in about 1-2 minutes and display your working web application at the top of the page!
+
+---
+
+### Method B: Deploy on Render Free Tier (With RAM Optimizations)
+If you still want to deploy on Render's Free Tier, we have optimized the repository (using CPU-only PyTorch and restricted Gunicorn workers) to stay under the 512MB RAM limit:
+
+1. **New Web Service:** Create a Web Service connected to your GitHub repository.
+2. **Configure Settings:**
+   *   **Runtime:** `Python`
    *   **Build Command:** `pip install -r requirements.txt`
-   *   **Start Command:** `gunicorn app:app` (Render automatically binds to the right port)
-5. **Add Environment Variables:**
-   *   Scroll down to the **Environment** section.
-   *   Click **Add Environment Variable**.
-   *   Key: `GROQ_API_KEY`
-   *   Value: *Your actual Groq API Key* (e.g. `gsk_...`)
-6. **Deploy:** Click **Deploy Web Service**. Render will build and deploy the app. Once complete, you will receive a public URL (e.g., `https://slidepilot.onrender.com`).
+   *   **Start Command:** `gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 2 app:app` 
+       *(Using exactly 1 worker and 2 threads prevents PyTorch from duplicating in memory and hitting the 512MB RAM limit).*
+3. **Environment Variables:**
+   *   Add a variable named `GROQ_API_KEY` and set its value to your actual Groq key.
+4. **Deploy:** Render will build the app using the lightweight CPU wheels and start Gunicorn.
 
 ---
 
