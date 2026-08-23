@@ -9,17 +9,12 @@ ENV PYTHONUNBUFFERED=1 \
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies (build-essential for FAISS C++ compiling if needed)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy requirements
 COPY requirements.txt /app/
 
-# Install pip and package dependencies (CPU-only PyTorch to fit in RAM/storage limits)
+# Install pip and package dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy project files
 COPY . /app/
