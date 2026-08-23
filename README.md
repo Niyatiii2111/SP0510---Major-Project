@@ -1,6 +1,8 @@
 # SlidePilot — Smart Presentation Assistant
 ### Gesture Navigation · Zoom Control · AI PDF Chatbot
 
+🔗 **Live Website:** [slide-pilot-2.onrender.com](https://slide-pilot-2.onrender.com/)
+
 <p align="center">
   <img src="Home page.png" width="800" alt="SlidePilot Homepage Preview"/>
 </p>
